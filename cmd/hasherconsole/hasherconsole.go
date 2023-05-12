@@ -1,3 +1,12 @@
+/*
+hasherconsole application to retrieve password hash in console output
+
+Usage:
+
+	hasherconsole
+
+asks you to input clear-text string and outputs its hash
+*/
 package main
 
 import (
