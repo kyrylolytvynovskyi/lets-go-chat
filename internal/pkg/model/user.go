@@ -17,11 +17,6 @@ type CreateUserRequest struct {
 	Password string `json:"password"`
 }
 
-type CreateUserResponse struct {
-	Id       string `json:"id"`
-	UserName string `json:"userName"`
-}
-
 func (r *CreateUserRequest) Validate() error {
 	lenUserName := len(r.UserName)
 	if lenUserName < 4 {
@@ -34,4 +29,22 @@ func (r *CreateUserRequest) Validate() error {
 	}
 
 	return nil
+}
+
+type CreateUserResponse struct {
+	Id       string `json:"id"`
+	UserName string `json:"userName"`
+}
+
+type LoginUserRequest struct {
+	UserName string `json:"userName"`
+	Password string `json:"password"`
+}
+
+func (r *LoginUserRequest) Validate() error {
+	return nil
+}
+
+type LoginUserResponse struct {
+	Url string `json:"url"`
 }

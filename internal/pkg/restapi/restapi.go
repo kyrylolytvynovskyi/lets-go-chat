@@ -10,11 +10,15 @@ import (
 )
 
 type server struct {
-	userService *service.User
+	userService service.User
 }
 
 func NewServer() *server {
-	return &server{userService: service.NewUser()}
+	return &server{userService: service.NewUserInMemory()}
+}
+
+func (srv *server) getIndex(c *gin.Context) {
+	c.JSON(http.StatusOK, "Hello")
 }
 
 func (srv *server) postUser(c *gin.Context) {
@@ -32,19 +36,33 @@ func (srv *server) postUser(c *gin.Context) {
 		return
 	}
 
-	newUser, err := srv.userService.CreateUser(createUserRequest)
+	createUserResponse, err := srv.userService.CreateUser(createUserRequest)
 	if err != nil {
 		log.Printf("CreateUser error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 
-	createUserResponse := model.CreateUserResponse{UserName: newUser.UserName, Id: newUser.Id.String()}
 	c.IndentedJSON(http.StatusOK, createUserResponse)
 }
 
 func (srv *server) postUserLogin(c *gin.Context) {
+	var loginUserRequest model.LoginUserRequest
 
+	if err := c.BindJSON(&loginUserRequest); err != nil {
+		log.Printf("Binding error: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	loginUserResponse, err := srv.userService.LoginUser(loginUserRequest)
+	if err != nil {
+		log.Printf("LoginUser error: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, loginUserResponse)
 }
 
 func setupRouter() *gin.Engine {
@@ -53,6 +71,7 @@ func setupRouter() *gin.Engine {
 
 	router := gin.Default()
 
+	router.GET("/", srv.getIndex)
 	router.POST("/v1/user", srv.postUser)
 	router.POST("/v1/user/login", srv.postUserLogin)
 
