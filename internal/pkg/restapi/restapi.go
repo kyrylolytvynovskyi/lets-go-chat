@@ -13,6 +13,29 @@ type server struct {
 	userService service.User
 }
 
+// creational patterns: builder
+func BuildRestServer(builder Builder) {
+	builder.Reset()
+	factory := service.Factory(&service.FactoryInMemory{})
+	userService, _ := factory.CreateUserService()
+	builder.SetUserService(userService)
+}
+
+// creational patterns: singleton
+var serverSingleton *server
+
+func getServerInstance() *server {
+	if serverSingleton != nil {
+		return serverSingleton
+	}
+
+	builder := &BuilderInMemory{}
+	BuildRestServer(builder)
+	serverSingleton := builder.GetProduct()
+
+	return serverSingleton
+}
+
 func NewServer(factory service.Factory) *server {
 	userService, _ := factory.CreateUserService()
 
@@ -69,8 +92,7 @@ func (srv *server) postUserLogin(c *gin.Context) {
 
 func setupRouter() *gin.Engine {
 
-	factory := service.Factory(&service.FactoryInMemory{})
-	srv := NewServer(factory)
+	srv := getServerInstance()
 
 	router := gin.Default()
 

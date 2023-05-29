@@ -1,6 +1,6 @@
 package service
 
-// abstract factory for creating services
+//creational pattern: abstract factory
 type Factory interface {
 	CreateUserService() (User, error)
 }

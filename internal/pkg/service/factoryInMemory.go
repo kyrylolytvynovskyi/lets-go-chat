@@ -2,6 +2,7 @@ package service
 
 import "github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/model"
 
+//creational pattern: abstract factory
 type FactoryInMemory struct {
 }
 

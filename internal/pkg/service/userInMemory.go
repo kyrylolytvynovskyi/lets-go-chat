@@ -37,3 +37,13 @@ func (srv *UserInMemory) LoginUser(req model.LoginUserRequest) (model.LoginUserR
 	url := "ws://fancy-chat.io/ws&token=one-time-token"
 	return model.LoginUserResponse{Url: url}, nil
 }
+
+func (srv *UserInMemory) Clone() User {
+	users := make(map[string]model.User, len(srv.users))
+	for k, v := range srv.users {
+		users[k] = v
+	}
+
+	userInMemory := &UserInMemory{users}
+	return userInMemory
+}
