@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/google/uuid"
 	"github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/model"
@@ -46,4 +47,16 @@ func (srv *UserInMemory) Clone() User {
 
 	userInMemory := &UserInMemory{users}
 	return userInMemory
+}
+
+// behavioral patterns: iterator
+func (srv *UserInMemory) GetIterator() UserIterator {
+
+	keys := make([]string, 0, len(srv.users))
+	for k := range srv.users {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	return UserIterator{userInMemory: srv, keys: keys}
 }
