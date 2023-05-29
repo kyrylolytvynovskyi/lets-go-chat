@@ -13,8 +13,10 @@ type server struct {
 	userService service.User
 }
 
-func NewServer() *server {
-	return &server{userService: service.NewUserInMemory()}
+func NewServer(factory service.Factory) *server {
+	userService, _ := factory.CreateUserService()
+
+	return &server{userService: userService}
 }
 
 func (srv *server) getIndex(c *gin.Context) {
@@ -67,7 +69,8 @@ func (srv *server) postUserLogin(c *gin.Context) {
 
 func setupRouter() *gin.Engine {
 
-	srv := NewServer()
+	factory := service.Factory(&service.FactoryInMemory{})
+	srv := NewServer(factory)
 
 	router := gin.Default()
 

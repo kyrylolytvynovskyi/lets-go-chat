@@ -11,10 +11,6 @@ type UserInMemory struct {
 	users map[string]model.User
 }
 
-func NewUserInMemory() User {
-	return &UserInMemory{users: map[string]model.User{}}
-}
-
 func (srv *UserInMemory) CreateUser(req model.CreateUserRequest) (model.CreateUserResponse, error) {
 	_, exist := srv.users[req.UserName]
 	if exist {
