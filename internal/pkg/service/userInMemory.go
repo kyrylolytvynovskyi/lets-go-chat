@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/google/uuid"
 	"github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/model"
@@ -9,10 +10,6 @@ import (
 
 type UserInMemory struct {
 	users map[string]model.User
-}
-
-func NewUserInMemory() User {
-	return &UserInMemory{users: map[string]model.User{}}
 }
 
 func (srv *UserInMemory) CreateUser(req model.CreateUserRequest) (model.CreateUserResponse, error) {
@@ -40,4 +37,26 @@ func (srv *UserInMemory) LoginUser(req model.LoginUserRequest) (model.LoginUserR
 
 	url := "ws://fancy-chat.io/ws&token=one-time-token"
 	return model.LoginUserResponse{Url: url}, nil
+}
+
+func (srv *UserInMemory) Clone() User {
+	users := make(map[string]model.User, len(srv.users))
+	for k, v := range srv.users {
+		users[k] = v
+	}
+
+	userInMemory := &UserInMemory{users}
+	return userInMemory
+}
+
+// behavioral patterns: iterator
+func (srv *UserInMemory) GetIterator() UserIterator {
+
+	keys := make([]string, 0, len(srv.users))
+	for k := range srv.users {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	return UserIterator{userInMemory: srv, keys: keys}
 }
