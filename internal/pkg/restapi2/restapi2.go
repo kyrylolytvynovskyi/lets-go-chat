@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	mw "github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/middleware"
 	"github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/model"
 	"github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/service"
 )
@@ -85,13 +86,31 @@ func (srv *server) postUserLogin(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(loginUserResponse)
 }
 
-func Run(addr string) error {
-
+func setupRouter() *http.ServeMux {
+	mux := http.NewServeMux()
 	srv := NewServer(&service.FactoryInMemory{})
 
-	http.HandleFunc("/", srv.getIndex)
-	http.HandleFunc("/v1/user", srv.postUser)
-	http.HandleFunc("/v1/user/login", srv.postUserLogin)
+	mux.Handle("/",
+		mw.LogHttp(
+			mw.EnforceMethod(http.MethodGet,
+				http.HandlerFunc(srv.getIndex))))
 
-	return http.ListenAndServe(addr, nil)
+	mux.HandleFunc("/v1/user", srv.postUser)
+	mux.HandleFunc("/v1/user/login", srv.postUserLogin)
+
+	//http.MethodGet
+	return mux
+}
+
+func Run(addr string) error {
+
+	/*	srv := NewServer(&service.FactoryInMemory{})
+
+		http.HandleFunc("/", srv.getIndex)
+		http.HandleFunc("/v1/user", srv.postUser)
+		http.HandleFunc("/v1/user/login", srv.postUserLogin)
+
+		return http.ListenAndServe(addr, nil)
+	*/
+	return http.ListenAndServe(addr, setupRouter())
 }
