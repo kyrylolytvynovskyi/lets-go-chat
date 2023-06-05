@@ -8,6 +8,11 @@ require (
 )
 
 require (
+	github.com/felixge/httpsnoop v1.0.1 // indirect
+	github.com/gorilla/handlers v1.5.1 // indirect
+)
+
+require (
 	github.com/bytedance/sonic v1.8.0 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect

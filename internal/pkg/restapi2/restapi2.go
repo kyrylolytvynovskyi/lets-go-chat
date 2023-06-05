@@ -5,36 +5,31 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
-	mw "github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/middleware"
 	"github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/model"
 	"github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/service"
+
+	"github.com/gorilla/handlers"
 )
 
 type server struct {
 	userService service.User
+	router      *http.ServeMux
 }
 
 func NewServer(factory service.Factory) *server {
 	userService, _ := factory.CreateUserService()
 
-	return &server{userService: userService}
+	return &server{userService: userService, router: http.NewServeMux()}
 }
 
 func (srv *server) getIndex(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		http.Error(w, "Get is supported", http.StatusMethodNotAllowed)
-		return
-	}
 
 	fmt.Fprintf(w, "Hello from http server")
 }
 
 func (srv *server) postUser(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, "POST is supported", http.StatusMethodNotAllowed)
-		return
-	}
 
 	var createUserRequest model.CreateUserRequest
 	err := json.NewDecoder(r.Body).Decode(&createUserRequest)
@@ -62,10 +57,6 @@ func (srv *server) postUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *server) postUserLogin(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		http.Error(w, "POST is supported", http.StatusMethodNotAllowed)
-		return
-	}
 
 	var loginUserRequest model.LoginUserRequest
 	err := json.NewDecoder(r.Body).Decode(&loginUserRequest)
@@ -87,30 +78,14 @@ func (srv *server) postUserLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 func setupRouter() *http.ServeMux {
-	mux := http.NewServeMux()
 	srv := NewServer(&service.FactoryInMemory{})
 
-	mux.Handle("/",
-		mw.LogHttp(
-			mw.EnforceMethod(http.MethodGet,
-				http.HandlerFunc(srv.getIndex))))
+	srv.routes()
 
-	mux.HandleFunc("/v1/user", srv.postUser)
-	mux.HandleFunc("/v1/user/login", srv.postUserLogin)
-
-	//http.MethodGet
-	return mux
+	return srv.router
 }
 
 func Run(addr string) error {
 
-	/*	srv := NewServer(&service.FactoryInMemory{})
-
-		http.HandleFunc("/", srv.getIndex)
-		http.HandleFunc("/v1/user", srv.postUser)
-		http.HandleFunc("/v1/user/login", srv.postUserLogin)
-
-		return http.ListenAndServe(addr, nil)
-	*/
-	return http.ListenAndServe(addr, setupRouter())
+	return http.ListenAndServe(addr, handlers.LoggingHandler(os.Stdout, setupRouter()))
 }
