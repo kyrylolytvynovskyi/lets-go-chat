@@ -19,4 +19,13 @@ func (srv *server) routes() {
 	srv.router.HandleFunc("/v1/user/login",
 		mw.EnforceMethod(http.MethodPost,
 			srv.postUserLogin))
+
+	srv.router.HandleFunc("/panic/string",
+		mw.EnforceMethod(http.MethodGet,
+			srv.getStringPanic))
+
+	srv.router.HandleFunc("/panic/struct",
+		mw.EnforceMethod(http.MethodGet,
+			srv.getStructPanic))
+
 }

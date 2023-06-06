@@ -11,6 +11,7 @@ import (
 	"github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/service"
 
 	"github.com/gorilla/handlers"
+	mw "github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/middleware"
 )
 
 type server struct {
@@ -27,6 +28,16 @@ func NewServer(factory service.Factory) *server {
 func (srv *server) getIndex(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, "Hello from http server")
+}
+
+func (srv *server) getStringPanic(w http.ResponseWriter, r *http.Request) {
+
+	panic("panic in stringPanic")
+}
+
+func (srv *server) getStructPanic(w http.ResponseWriter, r *http.Request) {
+
+	panic(mw.PanicStruct{Code: 404, Msg: "panic message"})
 }
 
 func (srv *server) postUser(w http.ResponseWriter, r *http.Request) {
@@ -87,5 +98,9 @@ func setupRouter() *http.ServeMux {
 
 func Run(addr string) error {
 
-	return http.ListenAndServe(addr, handlers.LoggingHandler(os.Stdout, setupRouter()))
+	//return http.ListenAndServe(addr, handlers.LoggingHandler(os.Stdout, setupRouter()))
+	return http.ListenAndServe(
+		addr,
+		handlers.LoggingHandler(os.Stdout,
+			mw.RecoverPanic(setupRouter())))
 }
