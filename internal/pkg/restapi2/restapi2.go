@@ -103,5 +103,6 @@ func Run(addr string) error {
 	return http.ListenAndServe(
 		addr,
 		handlers.LoggingHandler(os.Stdout,
-			mw.RecoverPanic(setupRouter())))
+			handlers.RecoveryHandler()(
+				setupRouter())))
 }
