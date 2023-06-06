@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"log"
 	"net/http"
 )
 
@@ -13,6 +14,7 @@ func RecoverPanic(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if r := recover(); r != nil {
+				log.Printf("Panic call occured: %v", r)
 				switch v := r.(type) {
 				case string:
 					http.Error(w, v, http.StatusInternalServerError)
