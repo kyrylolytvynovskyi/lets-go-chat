@@ -19,6 +19,9 @@ func (srv *server) routes() {
 		mw.EnforceMethod(http.MethodPost,
 			srv.postUserLogin))
 
+	srv.router.Handle("/error",
+		handlers.MethodHandler{http.MethodGet: http.HandlerFunc(srv.getError)})
+
 	srv.router.HandleFunc("/panic/string",
 		mw.EnforceMethod(http.MethodGet,
 			srv.getStringPanic))

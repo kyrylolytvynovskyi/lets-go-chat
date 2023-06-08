@@ -31,6 +31,11 @@ func (srv *server) getIndex(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello from http server")
 }
 
+func (srv *server) getError(w http.ResponseWriter, r *http.Request) {
+
+	http.Error(w, "test error response", http.StatusInternalServerError)
+}
+
 func (srv *server) getStringPanic(w http.ResponseWriter, r *http.Request) {
 
 	panic("panic in stringPanic")
@@ -99,10 +104,12 @@ func setupRouter() *http.ServeMux {
 
 func Run(addr string) error {
 
-	//return http.ListenAndServe(addr, handlers.LoggingHandler(os.Stdout, setupRouter()))
+	routerWithRecovery := handlers.RecoveryHandler()(setupRouter())
+	//loggingHandler := handlers.LoggingHandler()
+
 	return http.ListenAndServe(
 		addr,
-		handlers.LoggingHandler(os.Stdout,
-			handlers.RecoveryHandler()(
-				setupRouter())))
+		mw.ErrorLoggingHandler(os.Stdout,
+			handlers.LoggingHandler(os.Stdout, routerWithRecovery)))
+	//handlers.CustomLoggingHandler(os.Stdout, routerWithRecovery, ))
 }
