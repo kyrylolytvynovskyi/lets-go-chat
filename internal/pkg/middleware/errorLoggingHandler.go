@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-
-	"github.com/felixge/httpsnoop"
 )
 
 type errorLoggingHandler struct {
@@ -14,7 +12,7 @@ type errorLoggingHandler struct {
 }
 
 type errorLogger struct {
-	w        http.ResponseWriter
+	http.ResponseWriter
 	status   int
 	size     int
 	response string
@@ -24,42 +22,37 @@ func (l *errorLogger) Write(b []byte) (int, error) {
 	//wrap Write to get error text
 	l.response = string(b)
 
-	size, err := l.w.Write(b)
+	size, err := l.ResponseWriter.Write(b)
 	l.size += size
 	return size, err
 }
 
 func (l *errorLogger) WriteHeader(s int) {
 	//wrap WriteHeader to get error code
-	l.w.WriteHeader(s)
+	l.ResponseWriter.WriteHeader(s)
 	l.status = s
 }
 
+/*
+//we dont need it as ResponseWriter is embedded and errorLogger satisfies ResponseWriter interface without it
+func (l *errorLogger) Header() http.Header {
+	return l.ResponseWriter.Header()
+}*/
+
 func (h errorLoggingHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	logger := &errorLogger{ResponseWriter: w, status: http.StatusOK}
 
-	logger, w := makeLogger(w)
-	//url := *req.URL
-
-	h.handler.ServeHTTP(w, req)
+	h.handler.ServeHTTP(logger, req)
 	if req.MultipartForm != nil {
 		req.MultipartForm.RemoveAll()
 	}
 
 	if logger.status != http.StatusOK {
 		fmt.Fprintf(h.writer, "Error response: %s", logger.response)
+		if len(logger.response) == 0 || logger.response[len(logger.response)-1] != '\n' {
+			fmt.Fprintf(h.writer, "\n")
+		}
 	}
-}
-
-func makeLogger(w http.ResponseWriter) (*errorLogger, http.ResponseWriter) {
-	logger := &errorLogger{w: w, status: http.StatusOK}
-	return logger, httpsnoop.Wrap(w, httpsnoop.Hooks{
-		Write: func(httpsnoop.WriteFunc) httpsnoop.WriteFunc {
-			return logger.Write
-		},
-		WriteHeader: func(httpsnoop.WriteHeaderFunc) httpsnoop.WriteHeaderFunc {
-			return logger.WriteHeader
-		},
-	})
 }
 
 func ErrorLoggingHandler(out io.Writer, h http.Handler) http.Handler {
