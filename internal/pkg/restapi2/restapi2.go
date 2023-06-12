@@ -94,22 +94,21 @@ func (srv *server) postUserLogin(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(loginUserResponse)
 }
 
-func setupRouter() *http.ServeMux {
+func setupRouter() http.Handler {
 	srv := NewServer(&service.FactoryInMemory{})
 
 	srv.routes()
 
-	return srv.router
+	router := mw.ErrorLoggingHandler(os.Stdout)(
+		handlers.LoggingHandler(os.Stdout,
+			mw.RecoverPanic(srv.router)))
+
+	return router
 }
 
 func Run(addr string) error {
 
-	routerWithRecovery := handlers.RecoveryHandler()(setupRouter())
-	//loggingHandler := handlers.LoggingHandler()
+	router := setupRouter()
 
-	return http.ListenAndServe(
-		addr,
-		mw.ErrorLoggingHandler(os.Stdout,
-			handlers.LoggingHandler(os.Stdout, routerWithRecovery)))
-	//handlers.CustomLoggingHandler(os.Stdout, routerWithRecovery, ))
+	return http.ListenAndServe(addr, router )
 }

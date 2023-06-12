@@ -55,6 +55,8 @@ func (h errorLoggingHandler) ServeHTTP(w http.ResponseWriter, req *http.Request)
 	}
 }
 
-func ErrorLoggingHandler(out io.Writer, h http.Handler) http.Handler {
-	return errorLoggingHandler{out, h}
+func ErrorLoggingHandler(out io.Writer) func(h http.Handler) http.Handler {
+	return func(h http.Handler) http.Handler {
+		return errorLoggingHandler{out, h}
+	}
 }

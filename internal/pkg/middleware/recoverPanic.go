@@ -10,8 +10,8 @@ type PanicStruct struct {
 	Msg  string
 }
 
-func RecoverPanic(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func RecoverPanic(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if r := recover(); r != nil {
 				log.Printf("Panic call occured: %v", r)
@@ -26,6 +26,6 @@ func RecoverPanic(next http.HandlerFunc) http.HandlerFunc {
 			}
 		}()
 
-		next(w, r)
-	}
+		next.ServeHTTP(w, r)
+	})
 }
