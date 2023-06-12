@@ -8,5 +8,5 @@ import (
 
 func main() {
 
-	log.Fatal(restapi2.Run("0.0.0.0:8080"))
+	log.Fatal(restapi2.Run("0.0.0.0:8080", "127.0.0.1:8080"))
 }
