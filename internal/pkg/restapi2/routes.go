@@ -2,7 +2,9 @@ package restapi2
 
 import (
 	"net/http"
+	"os"
 
+	"github.com/gorilla/handlers"
 	mw "github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/middleware"
 )
 
@@ -32,4 +34,16 @@ func (srv *server) routes() {
 		mw.EnforceMethod(http.MethodGet,
 			srv.getStructPanic))
 
+}
+
+func setupRouter() http.Handler {
+	srv := newServer()
+
+	srv.routes()
+
+	router := mw.ErrorLoggingHandler(os.Stdout)(
+		handlers.LoggingHandler(os.Stdout,
+			mw.RecoverPanic(srv.router)))
+
+	return router
 }
