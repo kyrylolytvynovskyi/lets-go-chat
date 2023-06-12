@@ -6,12 +6,9 @@ import (
 	"log"
 	"net/http"
 
-	"os"
-
 	"github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/model"
 	"github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/service"
 
-	"github.com/gorilla/handlers"
 	mw "github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/middleware"
 )
 
@@ -20,7 +17,8 @@ type server struct {
 	router      *http.ServeMux
 }
 
-func NewServer(factory service.Factory) *server {
+func NewServer() *server {
+	factory := service.Factory(&service.FactoryInMemory{})
 	userService, _ := factory.CreateUserService()
 
 	return &server{userService: userService, router: http.NewServeMux()}
@@ -94,21 +92,9 @@ func (srv *server) postUserLogin(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(loginUserResponse)
 }
 
-func setupRouter() http.Handler {
-	srv := NewServer(&service.FactoryInMemory{})
-
-	srv.routes()
-
-	router := mw.ErrorLoggingHandler(os.Stdout)(
-		handlers.LoggingHandler(os.Stdout,
-			mw.RecoverPanic(srv.router)))
-
-	return router
-}
-
 func Run(addr string) error {
 
 	router := setupRouter()
 
-	return http.ListenAndServe(addr, router )
+	return http.ListenAndServe(addr, router)
 }
