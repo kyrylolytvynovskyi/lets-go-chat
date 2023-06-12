@@ -4,8 +4,11 @@ go 1.20
 
 require (
 	github.com/gin-gonic/gin v1.9.0
+	github.com/gorilla/handlers v1.5.1
 	golang.org/x/crypto v0.9.0
 )
+
+require github.com/felixge/httpsnoop v1.0.1 // indirect
 
 require (
 	github.com/bytedance/sonic v1.8.0 // indirect
