@@ -37,7 +37,7 @@ func (srv *server) routes() {
 }
 
 func setupRouter() http.Handler {
-	srv := NewServer()
+	srv := newServer()
 
 	srv.routes()
 

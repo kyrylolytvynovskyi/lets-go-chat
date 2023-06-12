@@ -17,7 +17,7 @@ type server struct {
 	router      *http.ServeMux
 }
 
-func NewServer() *server {
+func newServer() *server {
 	factory := service.Factory(&service.FactoryInMemory{})
 	userService, _ := factory.CreateUserService()
 
@@ -90,11 +90,4 @@ func (srv *server) postUserLogin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(loginUserResponse)
-}
-
-func Run(addr string) error {
-
-	router := setupRouter()
-
-	return http.ListenAndServe(addr, router)
 }
