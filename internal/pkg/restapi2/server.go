@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gorilla/websocket"
 	"github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/model"
 	"github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/service"
 
@@ -14,14 +15,22 @@ import (
 
 type server struct {
 	userService service.User
+	chatService *service.Chat
+	upgrader    websocket.Upgrader
 	router      *http.ServeMux
 }
 
-func newServer() *server {
-	factory := service.Factory(&service.FactoryInMemory{})
-	userService, _ := factory.CreateUserService()
+func newServer(wsAddr string) *server {
+	//factory := service.Factory(&service.FactoryInMemory{})
+	userService := service.NewUserInMemory()
+	chatService := service.NewChat("ws://" + wsAddr + "/ws")
+	upgrader := websocket.Upgrader{
+		ReadBufferSize:  4096,
+		WriteBufferSize: 4096,
+		CheckOrigin:     func(r *http.Request) bool { return true },
+	}
 
-	return &server{userService: userService, router: http.NewServeMux()}
+	return &server{userService: userService, chatService: chatService, upgrader: upgrader, router: http.NewServeMux()}
 }
 
 func (srv *server) getIndex(w http.ResponseWriter, r *http.Request) {
@@ -86,6 +95,8 @@ func (srv *server) postUserLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	loginUserResponse.Url = srv.chatService.GetNewUrl(loginUserRequest.UserName)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

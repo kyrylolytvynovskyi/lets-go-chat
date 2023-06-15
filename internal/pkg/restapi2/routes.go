@@ -34,16 +34,26 @@ func (srv *server) routes() {
 		mw.EnforceMethod(http.MethodGet,
 			srv.getStructPanic))
 
+	srv.router.HandleFunc("/ws", srv.wsEndpoint)
+
+	srv.router.HandleFunc("/v1/users/active",
+		mw.EnforceMethod(http.MethodGet,
+			srv.getActiveUsers))
+
 }
 
-func setupRouter() http.Handler {
-	srv := newServer()
+func setupRouter(wsAddr string) http.Handler {
+	srv := newServer(wsAddr)
 
 	srv.routes()
 
-	router := mw.ErrorLoggingHandler(os.Stdout)(
+	/*	router := mw.ErrorLoggingHandler(os.Stdout)(
 		handlers.LoggingHandler(os.Stdout,
 			mw.RecoverPanic(srv.router)))
+	*/
+
+	router := handlers.LoggingHandler(os.Stdout,
+		mw.RecoverPanic(srv.router))
 
 	return router
 }
