@@ -28,11 +28,10 @@ func TestHashPassword(t *testing.T) {
 func ExampleHashPassword() {
 	myPassword := "myPassword"
 	hash, _ := HashPassword(myPassword)
-	fmt.Println(myPassword)
-	fmt.Println(hash)
+	isEqual := CheckPasswordHash(myPassword, hash)
+	fmt.Println(isEqual)
 	// Output:
-	// myPassword
-	// $2a$14$fo41Lff9uGg3Bmm6OZ1g9uZGsZALyX.8GGwG/Gd0zmngNBM.4RKbG
+	// true
 }
 
 func ExampleCheckPasswordHash() {
