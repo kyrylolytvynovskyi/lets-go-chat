@@ -10,17 +10,17 @@ import (
 type Chat struct {
 	WsUrl string
 
-	tokens map[string]string		//token : login
-	activeUsers map[string]string	//token : login
+	tokens      map[string]string //token : login
+	activeUsers map[string]string //token : login
 
 	mtx sync.Mutex
 }
 
 func NewChat(wsUrl string) *Chat {
 	return &Chat{
-		WsUrl:  wsUrl,
-		tokens: map[string]string{},
-		activeUsers: map[string]string{},}
+		WsUrl:       wsUrl,
+		tokens:      map[string]string{},
+		activeUsers: map[string]string{}}
 }
 
 func (c *Chat) GetNewUrl(login string) string {
@@ -47,22 +47,28 @@ func (c *Chat) LoginToken(token string) error {
 	return nil
 }
 
-func (c *Chat) LogoutToken(token string) {
+func (c *Chat) LogoutToken(token string) error {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
+
+	_, ok := c.activeUsers[token]
+	if !ok {
+		return fmt.Errorf("invalid token %s", token)
+	}
 
 	delete(c.activeUsers, token)
+	return nil
 }
 
-func (c *Chat)GetActiveUsers() []string {
-	
+func (c *Chat) GetActiveUsers() []string {
+
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	ret := make( []string, 0, len(c.activeUsers))
+	ret := make([]string, 0, len(c.activeUsers))
 
 	for _, v := range c.activeUsers {
-		ret = append( ret, v)
+		ret = append(ret, v)
 	}
 
 	return ret

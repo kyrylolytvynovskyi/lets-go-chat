@@ -9,40 +9,19 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	mw "github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/middleware"
 	"github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/model"
 	"github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/service"
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_newServer(t *testing.T) {
+func Test_newInMemoryServer(t *testing.T) {
 
-	//	server := newServer("localhost:8080")
-
-	//	server.userService.
-
-	/*
-		type args struct {
-			wsAddr string
-		}
-
-		tests := []struct {
-			name string
-			args args
-			want *server
-		}{
-
-			// TODO: Add test cases.
-			{"Create Server", { "localhost:8080" }, &server{}},
-		}
-
-		for _, tt := range tests {
-			t.Run(tt.name, func(t *testing.T) {
-				if got := newServer(tt.args.wsAddr); !reflect.DeepEqual(got, tt.want) {
-					t.Errorf("newServer() = %v, want %v", got, tt.want)
-				}
-			})
-		}
-	*/
+	server := newInMemoryServer("localhost:8080")
+	assert.NotNil(t, server.chatService)
+	assert.NotNil(t, server.userService)
+	assert.NotNil(t, server.router)
+	assert.NotNil(t, server.upgrader)
 }
 
 type mockUserServer struct {
@@ -230,6 +209,20 @@ func testPostUserLoginServiceError(t *testing.T, userServer *mockUserServer, mux
 
 }
 
+func testPostUserLoginParsingError(t *testing.T, userServer *mockUserServer, mux *http.ServeMux) {
+
+	req := httptest.NewRequest(http.MethodPost, "/v1/user/login", bytes.NewBuffer([]byte("invalid json")))
+
+	resp := httptest.NewRecorder()
+	mux.ServeHTTP(resp, req)
+	result := resp.Result()
+	defer result.Body.Close()
+
+	assert.Equal(t, http.StatusBadRequest, resp.Code, "Wrong http status code")
+	data, _ := ioutil.ReadAll(resp.Body)
+	assert.Equal(t, "invalid character 'i' looking for beginning of value\n", string(data), "Wrong response text")
+}
+
 func Test_server_postUserLogin(t *testing.T) {
 	userServer := &mockUserServer{}
 	srv := newMockServer(userServer)
@@ -237,5 +230,50 @@ func Test_server_postUserLogin(t *testing.T) {
 
 	testPostUserLoginSuccess(t, userServer, srv.router)
 	testPostUserLoginServiceError(t, userServer, srv.router)
+	testPostUserLoginParsingError(t, userServer, srv.router)
 
+}
+
+func Test_server_getError(t *testing.T) {
+	srv := newMockServer(&mockUserServer{})
+	srv.routes()
+
+	req := httptest.NewRequest(http.MethodGet, "/error", nil)
+
+	resp := httptest.NewRecorder()
+	srv.router.ServeHTTP(resp, req)
+	result := resp.Result()
+	defer result.Body.Close()
+
+	assert.Equal(t, http.StatusInternalServerError, resp.Code)
+
+	data, err := ioutil.ReadAll(resp.Body)
+	assert.NoError(t, err)
+	assert.Contains(t, string(data), "test error response")
+}
+
+func Test_server_getStringPanic(t *testing.T) {
+	srv := newMockServer(&mockUserServer{})
+	srv.routes()
+
+	req := httptest.NewRequest(http.MethodGet, "/panic/string", nil)
+
+	resp := httptest.NewRecorder()
+
+	panicFunc := func() { srv.router.ServeHTTP(resp, req) }
+
+	assert.PanicsWithValue(t, "panic in stringPanic", panicFunc)
+}
+
+func Test_server_getStructPanic(t *testing.T) {
+	srv := newMockServer(&mockUserServer{})
+	srv.routes()
+
+	req := httptest.NewRequest(http.MethodGet, "/panic/struct", nil)
+
+	resp := httptest.NewRecorder()
+
+	panicFunc := func() { srv.router.ServeHTTP(resp, req) }
+
+	assert.PanicsWithValue(t, mw.PanicStruct{Code: 404, Msg: "panic message"}, panicFunc)
 }
