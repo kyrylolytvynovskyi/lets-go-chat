@@ -28,11 +28,10 @@ func TestHashPassword(t *testing.T) {
 func ExampleHashPassword() {
 	myPassword := "myPassword"
 	hash, _ := HashPassword(myPassword)
-	fmt.Println(myPassword)
-	fmt.Println(hash)
+	isEqual := CheckPasswordHash(myPassword, hash)
+	fmt.Println(isEqual)
 	// Output:
-	// myPassword
-	// $2a$14$fo41Lff9uGg3Bmm6OZ1g9uZGsZALyX.8GGwG/Gd0zmngNBM.4RKbG
+	// true
 }
 
 func ExampleCheckPasswordHash() {
@@ -42,4 +41,29 @@ func ExampleCheckPasswordHash() {
 	// Output:
 	// true
 	// false
+}
+
+var benchmarkHash string
+
+func BenchmarkHashPassword(b *testing.B) {
+	myPassword := "myPassword"
+	var hash string
+	for n := 0; n < b.N; n++ {
+		hash, _ = HashPassword(myPassword)
+	}
+
+	benchmarkHash = hash
+}
+
+var benchmarkIsPwdHashEqual bool
+
+func BenchmarkCheckPasswordHash(b *testing.B) {
+	myPassword := "myPassword"
+	myHash := "$2a$14$fo41Lff9uGg3Bmm6OZ1g9uZGsZALyX.8GGwG/Gd0zmngNBM.4RKbG"
+	var isPwdHashEqual bool
+	for n := 0; n < b.N; n++ {
+		isPwdHashEqual = CheckPasswordHash(myPassword, myHash)
+	}
+
+	benchmarkIsPwdHashEqual = isPwdHashEqual
 }

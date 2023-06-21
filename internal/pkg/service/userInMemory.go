@@ -39,7 +39,7 @@ func (srv *UserInMemory) LoginUser(req model.LoginUserRequest) (model.LoginUserR
 		return model.LoginUserResponse{}, fmt.Errorf("invalid password")
 	}
 
-	url := "ws://fancy-chat.io/ws&token=one-time-token"
+	url := "ws://fancy-chat.io/ws?token=one-time-token"
 	return model.LoginUserResponse{Url: url}, nil
 }
 

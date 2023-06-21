@@ -20,9 +20,9 @@ type server struct {
 	router      *http.ServeMux
 }
 
-func newServer(wsAddr string) *server {
+func newServer(wsAddr string, srv service.User) *server {
 	//factory := service.Factory(&service.FactoryInMemory{})
-	userService := service.NewUserInMemory()
+	userService := srv
 	chatService := service.NewChat("ws://" + wsAddr + "/ws")
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  4096,
@@ -31,6 +31,10 @@ func newServer(wsAddr string) *server {
 	}
 
 	return &server{userService: userService, chatService: chatService, upgrader: upgrader, router: http.NewServeMux()}
+}
+
+func newInMemoryServer(wsAddr string) *server {
+	return newServer(wsAddr, service.NewUserInMemory())
 }
 
 func (srv *server) getIndex(w http.ResponseWriter, r *http.Request) {

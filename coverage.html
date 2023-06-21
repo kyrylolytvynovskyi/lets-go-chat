@@ -1,0 +1,771 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>model: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/model/user.go (100.0%)</option>
+				
+				<option value="file1">github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/restapi/builderInMemory.go (100.0%)</option>
+				
+				<option value="file2">github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/restapi/restapi.go (0.0%)</option>
+				
+				<option value="file3">github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/restapi2/restapi2.go (0.0%)</option>
+				
+				<option value="file4">github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/restapi2/routes.go (66.7%)</option>
+				
+				<option value="file5">github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/restapi2/server.go (100.0%)</option>
+				
+				<option value="file6">github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/restapi2/wsserver.go (85.2%)</option>
+				
+				<option value="file7">github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/service/chat.go (100.0%)</option>
+				
+				<option value="file8">github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/service/factoryInMemory.go (100.0%)</option>
+				
+				<option value="file9">github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/service/userInMemory.go (100.0%)</option>
+				
+				<option value="file10">github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/service/userIterator.go (100.0%)</option>
+				
+				<option value="file11">github.com/kyrylolytvynovskyi/lets-go-chat/pkg/hasher/passwordhasher.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package model
+
+import (
+        "fmt"
+
+        "github.com/google/uuid"
+)
+
+type User struct {
+        Id       uuid.UUID
+        UserName string
+        Password string
+}
+
+type CreateUserRequest struct {
+        UserName string `json:"userName"`
+        Password string `json:"password"`
+}
+
+func (r *CreateUserRequest) Validate() error <span class="cov8" title="1">{
+        lenUserName := len(r.UserName)
+        if lenUserName &lt; 4 </span><span class="cov8" title="1">{
+                return fmt.Errorf("userName minLength is 4, actual length is %v", lenUserName)
+        }</span>
+
+        <span class="cov8" title="1">lenPassword := len(r.Password)
+        if lenPassword &lt; 8 </span><span class="cov8" title="1">{
+                return fmt.Errorf("password minLength is 8, actual length is %v", lenPassword)
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+type CreateUserResponse struct {
+        Id       string `json:"id"`
+        UserName string `json:"userName"`
+}
+
+type LoginUserRequest struct {
+        UserName string `json:"userName"`
+        Password string `json:"password"`
+}
+
+func (r *LoginUserRequest) Validate() error <span class="cov8" title="1">{
+        return nil
+}</span>
+
+type LoginUserResponse struct {
+        Url string `json:"url"`
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package restapi
+
+import "github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/service"
+
+//Creational pattern: builder
+type BuilderInMemory struct {
+        server *server
+}
+
+func (builder *BuilderInMemory) Reset() <span class="cov8" title="1">{
+        builder.server = &amp;server{}
+}</span>
+
+func (builder *BuilderInMemory) SetUserService(userService service.User) <span class="cov8" title="1">{
+        builder.server.userService = userService
+}</span>
+
+func (builder *BuilderInMemory) GetProduct() *server <span class="cov8" title="1">{
+        srv := builder.server
+        builder.Reset()
+        return srv
+}</span>
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package restapi
+
+import (
+        "log"
+        "net/http"
+
+        "github.com/gin-gonic/gin"
+        "github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/model"
+        "github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/service"
+)
+
+type server struct {
+        userService service.User
+}
+
+// creational patterns: builder
+func BuildRestServer(builder Builder) <span class="cov0" title="0">{
+        builder.Reset()
+        factory := service.Factory(&amp;service.FactoryInMemory{})
+        userService, _ := factory.CreateUserService()
+        builder.SetUserService(userService)
+}</span>
+
+// creational patterns: singleton
+var serverSingleton *server
+
+func getServerInstance() *server <span class="cov0" title="0">{
+        if serverSingleton != nil </span><span class="cov0" title="0">{
+                return serverSingleton
+        }</span>
+
+        <span class="cov0" title="0">builder := &amp;BuilderInMemory{}
+        BuildRestServer(builder)
+        serverSingleton := builder.GetProduct()
+
+        return serverSingleton</span>
+}
+
+func NewServer(factory service.Factory) *server <span class="cov0" title="0">{
+        userService, _ := factory.CreateUserService()
+
+        return &amp;server{userService: userService}
+}</span>
+
+func (srv *server) getIndex(c *gin.Context) <span class="cov0" title="0">{
+        c.JSON(http.StatusOK, "Hello")
+}</span>
+
+func (srv *server) postUser(c *gin.Context) <span class="cov0" title="0">{
+        var createUserRequest model.CreateUserRequest
+
+        if err := c.BindJSON(&amp;createUserRequest); err != nil </span><span class="cov0" title="0">{
+                log.Printf("Binding error: %v", err)
+                c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+                return
+        }</span>
+
+        <span class="cov0" title="0">if err := createUserRequest.Validate(); err != nil </span><span class="cov0" title="0">{
+                log.Printf("Validation error: %v", err)
+                c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+                return
+        }</span>
+
+        <span class="cov0" title="0">createUserResponse, err := srv.userService.CreateUser(createUserRequest)
+        if err != nil </span><span class="cov0" title="0">{
+                log.Printf("CreateUser error: %v", err)
+                c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+                return
+        }</span>
+
+        <span class="cov0" title="0">c.IndentedJSON(http.StatusOK, createUserResponse)</span>
+}
+
+func (srv *server) postUserLogin(c *gin.Context) <span class="cov0" title="0">{
+        var loginUserRequest model.LoginUserRequest
+
+        if err := c.BindJSON(&amp;loginUserRequest); err != nil </span><span class="cov0" title="0">{
+                log.Printf("Binding error: %v", err)
+                c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+                return
+        }</span>
+
+        <span class="cov0" title="0">loginUserResponse, err := srv.userService.LoginUser(loginUserRequest)
+        if err != nil </span><span class="cov0" title="0">{
+                log.Printf("LoginUser error: %v", err)
+                c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+                return
+        }</span>
+
+        <span class="cov0" title="0">c.JSON(http.StatusOK, loginUserResponse)</span>
+}
+
+func setupRouter() *gin.Engine <span class="cov0" title="0">{
+
+        srv := getServerInstance()
+
+        router := gin.Default()
+
+        router.GET("/", srv.getIndex)
+        router.POST("/v1/user", srv.postUser)
+        router.POST("/v1/user/login", srv.postUserLogin)
+
+        return router
+}</span>
+
+func Run(addr string) error <span class="cov0" title="0">{
+        router := setupRouter()
+        return router.Run(addr)
+}</span>
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package restapi2
+
+import "net/http"
+
+func Run(addr, wsAddr string) error <span class="cov0" title="0">{
+
+        router := setupRouter(wsAddr)
+
+        return http.ListenAndServe(addr, router)
+}</span>
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package restapi2
+
+import (
+        "net/http"
+        "os"
+
+        "github.com/gorilla/handlers"
+        mw "github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/middleware"
+)
+
+func (srv *server) routes() <span class="cov8" title="1">{
+
+        srv.router.Handle("/",
+                mw.EnforceMethod(http.MethodGet,
+                        srv.getIndex))
+
+        srv.router.Handle("/v1/user",
+                mw.EnforceMethod(http.MethodPost,
+                        srv.postUser))
+
+        srv.router.HandleFunc("/v1/user/login",
+                mw.EnforceMethod(http.MethodPost,
+                        srv.postUserLogin))
+
+        srv.router.Handle("/error",
+                mw.EnforceMethod(http.MethodGet,
+                        srv.getError))
+
+        srv.router.HandleFunc("/panic/string",
+                mw.EnforceMethod(http.MethodGet,
+                        srv.getStringPanic))
+
+        srv.router.HandleFunc("/panic/struct",
+                mw.EnforceMethod(http.MethodGet,
+                        srv.getStructPanic))
+
+        srv.router.HandleFunc("/ws", srv.wsEndpoint)
+
+        srv.router.HandleFunc("/v1/users/active",
+                mw.EnforceMethod(http.MethodGet,
+                        srv.getActiveUsers))
+
+}</span>
+
+func setupRouter(wsAddr string) http.Handler <span class="cov0" title="0">{
+        srv := newInMemoryServer(wsAddr)
+
+        srv.routes()
+
+        /*        router := mw.ErrorLoggingHandler(os.Stdout)(
+                handlers.LoggingHandler(os.Stdout,
+                        mw.RecoverPanic(srv.router)))
+        */
+
+        router := handlers.LoggingHandler(os.Stdout,
+                mw.RecoverPanic(srv.router))
+
+        return router
+}</span>
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package restapi2
+
+import (
+        "encoding/json"
+        "fmt"
+        "log"
+        "net/http"
+
+        "github.com/gorilla/websocket"
+        "github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/model"
+        "github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/service"
+
+        mw "github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/middleware"
+)
+
+type server struct {
+        userService service.User
+        chatService *service.Chat
+        upgrader    websocket.Upgrader
+        router      *http.ServeMux
+}
+
+func newServer(wsAddr string, srv service.User) *server <span class="cov8" title="1">{
+        //factory := service.Factory(&amp;service.FactoryInMemory{})
+        userService := srv
+        chatService := service.NewChat("ws://" + wsAddr + "/ws")
+        upgrader := websocket.Upgrader{
+                ReadBufferSize:  4096,
+                WriteBufferSize: 4096,
+                CheckOrigin:     func(r *http.Request) bool </span><span class="cov8" title="1">{ return true }</span>,
+        }
+
+        <span class="cov8" title="1">return &amp;server{userService: userService, chatService: chatService, upgrader: upgrader, router: http.NewServeMux()}</span>
+}
+
+func newInMemoryServer(wsAddr string) *server <span class="cov8" title="1">{
+        return newServer(wsAddr, service.NewUserInMemory())
+}</span>
+
+func (srv *server) getIndex(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+
+        fmt.Fprintf(w, "Hello from http server")
+}</span>
+
+func (srv *server) getError(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+
+        http.Error(w, "test error response", http.StatusInternalServerError)
+}</span>
+
+func (srv *server) getStringPanic(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+
+        panic("panic in stringPanic")</span>
+}
+
+func (srv *server) getStructPanic(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+
+        panic(mw.PanicStruct{Code: 404, Msg: "panic message"})</span>
+}
+
+func (srv *server) postUser(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+
+        var createUserRequest model.CreateUserRequest
+        err := json.NewDecoder(r.Body).Decode(&amp;createUserRequest)
+        if err != nil </span><span class="cov8" title="1">{
+                http.Error(w, err.Error(), http.StatusBadRequest)
+                return
+        }</span>
+
+        <span class="cov8" title="1">if err := createUserRequest.Validate(); err != nil </span><span class="cov8" title="1">{
+                log.Printf("Validation error: %v", err)
+                http.Error(w, err.Error(), http.StatusBadRequest)
+                return
+        }</span>
+
+        <span class="cov8" title="1">createUserResponse, err := srv.userService.CreateUser(createUserRequest)
+        if err != nil </span><span class="cov8" title="1">{
+                log.Printf("CreateUser error: %v", err)
+                http.Error(w, err.Error(), http.StatusBadRequest)
+                return
+        }</span>
+
+        <span class="cov8" title="1">w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(http.StatusOK)
+        json.NewEncoder(w).Encode(createUserResponse)</span>
+}
+
+func (srv *server) postUserLogin(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+
+        var loginUserRequest model.LoginUserRequest
+        err := json.NewDecoder(r.Body).Decode(&amp;loginUserRequest)
+        if err != nil </span><span class="cov8" title="1">{
+                http.Error(w, err.Error(), http.StatusBadRequest)
+                return
+        }</span>
+
+        <span class="cov8" title="1">loginUserResponse, err := srv.userService.LoginUser(loginUserRequest)
+        if err != nil </span><span class="cov8" title="1">{
+                log.Printf("LoginUser error: %v", err)
+                http.Error(w, err.Error(), http.StatusBadRequest)
+                return
+        }</span>
+
+        <span class="cov8" title="1">loginUserResponse.Url = srv.chatService.GetNewUrl(loginUserRequest.UserName)
+
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(http.StatusOK)
+        json.NewEncoder(w).Encode(loginUserResponse)</span>
+}
+</pre>
+		
+		<pre class="file" id="file6" style="display: none">package restapi2
+
+import (
+        "encoding/json"
+        "log"
+        "net/http"
+
+        "github.com/gorilla/websocket"
+)
+
+/*
+var upgrader = websocket.Upgrader{
+        ReadBufferSize:  4096,
+        WriteBufferSize: 4096,
+        //        EnableCompression: true,
+        //        CheckOrigin: func(r *http.Request) bool {
+        //                return true
+        //        },
+}*/
+
+func (srv *server) wsEndpoint(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        log.Println("wsEndpoint called")
+        token := r.URL.Query().Get("token")
+        log.Println("Received token: " + token)
+
+        //check token here
+        if err := srv.chatService.LoginToken(token); err != nil </span><span class="cov8" title="1">{
+                log.Println("Token validation error:", err)
+                return
+        }</span>
+        <span class="cov8" title="1">defer srv.chatService.LogoutToken(token)
+
+        wsconn, err := srv.upgrader.Upgrade(w, r, nil)
+        if err != nil </span><span class="cov0" title="0">{
+                log.Println("Upgrade err:", err)
+                return
+        }</span>
+        <span class="cov8" title="1">defer wsconn.Close()
+
+        log.Println("processing messages")
+        srv.processMessages(wsconn)</span>
+
+}
+
+func (srv *server) processMessages(wsconn *websocket.Conn) <span class="cov8" title="1">{
+        for </span><span class="cov8" title="1">{
+                messageType, buf, err := wsconn.ReadMessage()
+                if err != nil </span><span class="cov8" title="1">{
+                        log.Println(err)
+                        return
+                }</span>
+
+                <span class="cov8" title="1">log.Println(string(buf))
+
+                if err := wsconn.WriteMessage(messageType, buf); err != nil </span><span class="cov0" title="0">{
+                        log.Println(err)
+                        return
+                }</span>
+        }
+}
+
+func (srv *server) getActiveUsers(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+
+        activeUsers := srv.chatService.GetActiveUsers()
+
+        w.Header().Set("Content-Type", "application/json")
+        w.WriteHeader(http.StatusOK)
+        json.NewEncoder(w).Encode(activeUsers)
+}</span>
+</pre>
+		
+		<pre class="file" id="file7" style="display: none">package service
+
+import (
+        "fmt"
+        "sync"
+
+        "github.com/google/uuid"
+)
+
+type Chat struct {
+        WsUrl string
+
+        tokens      map[string]string //token : login
+        activeUsers map[string]string //token : login
+
+        mtx sync.Mutex
+}
+
+func NewChat(wsUrl string) *Chat <span class="cov8" title="1">{
+        return &amp;Chat{
+                WsUrl:       wsUrl,
+                tokens:      map[string]string{},
+                activeUsers: map[string]string{}}
+}</span>
+
+func (c *Chat) GetNewUrl(login string) string <span class="cov8" title="1">{
+        token := uuid.New().String()
+
+        c.mtx.Lock()
+        defer c.mtx.Unlock()
+        c.tokens[token] = login
+
+        return c.WsUrl + "?token=" + token
+}</span>
+
+func (c *Chat) LoginToken(token string) error <span class="cov8" title="1">{
+        c.mtx.Lock()
+        defer c.mtx.Unlock()
+
+        login, ok := c.tokens[token]
+        if !ok </span><span class="cov8" title="1">{
+                return fmt.Errorf("invalid token %s", token)
+        }</span>
+
+        <span class="cov8" title="1">c.activeUsers[token] = login
+        delete(c.tokens, token)
+        return nil</span>
+}
+
+func (c *Chat) LogoutToken(token string) error <span class="cov8" title="1">{
+        c.mtx.Lock()
+        defer c.mtx.Unlock()
+
+        _, ok := c.activeUsers[token]
+        if !ok </span><span class="cov8" title="1">{
+                return fmt.Errorf("invalid token %s", token)
+        }</span>
+
+        <span class="cov8" title="1">delete(c.activeUsers, token)
+        return nil</span>
+}
+
+func (c *Chat) GetActiveUsers() []string <span class="cov8" title="1">{
+
+        c.mtx.Lock()
+        defer c.mtx.Unlock()
+
+        ret := make([]string, 0, len(c.activeUsers))
+
+        for _, v := range c.activeUsers </span><span class="cov8" title="1">{
+                ret = append(ret, v)
+        }</span>
+
+        <span class="cov8" title="1">return ret</span>
+}
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package service
+
+import "github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/model"
+
+//creational pattern: abstract factory
+type FactoryInMemory struct {
+}
+
+func (factory *FactoryInMemory) CreateUserService() (User, error) <span class="cov8" title="1">{
+        return &amp;UserInMemory{users: map[string]model.User{}}, nil
+}</span>
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package service
+
+import (
+        "fmt"
+        "sort"
+
+        "github.com/google/uuid"
+        "github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/model"
+)
+
+type UserInMemory struct {
+        users map[string]model.User
+}
+
+func NewUserInMemory() User <span class="cov8" title="1">{
+        return &amp;UserInMemory{users: map[string]model.User{}}
+}</span>
+
+func (srv *UserInMemory) CreateUser(req model.CreateUserRequest) (model.CreateUserResponse, error) <span class="cov8" title="1">{
+        _, exist := srv.users[req.UserName]
+        if exist </span><span class="cov8" title="1">{
+                return model.CreateUserResponse{}, fmt.Errorf("User %s already exist", req.UserName)
+        }</span>
+
+        <span class="cov8" title="1">newUser := model.User{Id: uuid.New(), UserName: req.UserName, Password: req.Password}
+        srv.users[req.UserName] = newUser
+
+        return model.CreateUserResponse{Id: newUser.Id.String(), UserName: newUser.UserName}, nil</span>
+}
+
+func (srv *UserInMemory) LoginUser(req model.LoginUserRequest) (model.LoginUserResponse, error) <span class="cov8" title="1">{
+        user, exist := srv.users[req.UserName]
+
+        if !exist </span><span class="cov8" title="1">{
+                return model.LoginUserResponse{}, fmt.Errorf("login %s invalid", req.UserName)
+        }</span>
+
+        <span class="cov8" title="1">if user.Password != req.Password </span><span class="cov8" title="1">{
+                return model.LoginUserResponse{}, fmt.Errorf("invalid password")
+        }</span>
+
+        <span class="cov8" title="1">url := "ws://fancy-chat.io/ws?token=one-time-token"
+        return model.LoginUserResponse{Url: url}, nil</span>
+}
+
+func (srv *UserInMemory) Clone() User <span class="cov8" title="1">{
+        users := make(map[string]model.User, len(srv.users))
+        for k, v := range srv.users </span><span class="cov8" title="1">{
+                users[k] = v
+        }</span>
+
+        <span class="cov8" title="1">userInMemory := &amp;UserInMemory{users}
+        return userInMemory</span>
+}
+
+// behavioral patterns: iterator
+func (srv *UserInMemory) GetIterator() UserIterator <span class="cov8" title="1">{
+
+        keys := make([]string, 0, len(srv.users))
+        for k := range srv.users </span><span class="cov8" title="1">{
+                keys = append(keys, k)
+        }</span>
+        <span class="cov8" title="1">sort.Strings(keys)
+
+        return UserIterator{userInMemory: srv, keys: keys}</span>
+}
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package service
+
+import (
+        "fmt"
+
+        "github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/model"
+)
+
+// behavioral pattern: iterator
+type UserIterator struct {
+        userInMemory *UserInMemory
+        keys         []string
+        pos          int
+}
+
+func (it *UserIterator) MoveNext() <span class="cov8" title="1">{
+        it.pos++
+}</span>
+
+func (it *UserIterator) GetValue() (model.User, error) <span class="cov8" title="1">{
+
+        if it.pos &gt;= len(it.keys) </span><span class="cov8" title="1">{
+                return model.User{}, fmt.Errorf("index out of range")
+        }</span>
+
+        <span class="cov8" title="1">return it.userInMemory.users[it.keys[it.pos]], nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">// Package hasher provide functions for coverting
+// given plain-text password into a hash
+// and validating plain-text password against given hash
+package hasher
+
+import "golang.org/x/crypto/bcrypt"
+
+// Receives string password as input and returns its string hash or error if any problems occur
+func HashPassword(password string) (string, error) <span class="cov8" title="1">{
+        bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+        return string(bytes), err
+}</span>
+
+// Receives string password and hash and returns true if hashed password is equal to provided hash
+func CheckPasswordHash(password, hash string) bool <span class="cov8" title="1">{
+        err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+        return err == nil
+}</span>
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
