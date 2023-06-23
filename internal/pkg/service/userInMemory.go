@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"sort"
+	"sync"
 
 	"github.com/google/uuid"
 	"github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/model"
@@ -10,6 +11,8 @@ import (
 
 type UserInMemory struct {
 	users map[string]model.User
+
+	mtx sync.Mutex
 }
 
 func NewUserInMemory() User {
@@ -17,6 +20,9 @@ func NewUserInMemory() User {
 }
 
 func (srv *UserInMemory) CreateUser(req model.CreateUserRequest) (model.CreateUserResponse, error) {
+	srv.mtx.Lock()
+	defer srv.mtx.Unlock()
+
 	_, exist := srv.users[req.UserName]
 	if exist {
 		return model.CreateUserResponse{}, fmt.Errorf("User %s already exist", req.UserName)
@@ -29,6 +35,9 @@ func (srv *UserInMemory) CreateUser(req model.CreateUserRequest) (model.CreateUs
 }
 
 func (srv *UserInMemory) LoginUser(req model.LoginUserRequest) (model.LoginUserResponse, error) {
+	srv.mtx.Lock()
+	defer srv.mtx.Unlock()
+
 	user, exist := srv.users[req.UserName]
 
 	if !exist {
@@ -44,17 +53,22 @@ func (srv *UserInMemory) LoginUser(req model.LoginUserRequest) (model.LoginUserR
 }
 
 func (srv *UserInMemory) Clone() User {
+	srv.mtx.Lock()
+	defer srv.mtx.Unlock()
+
 	users := make(map[string]model.User, len(srv.users))
 	for k, v := range srv.users {
 		users[k] = v
 	}
 
-	userInMemory := &UserInMemory{users}
+	userInMemory := &UserInMemory{users: users}
 	return userInMemory
 }
 
 // behavioral patterns: iterator
 func (srv *UserInMemory) GetIterator() UserIterator {
+	srv.mtx.Lock()
+	defer srv.mtx.Unlock()
 
 	keys := make([]string, 0, len(srv.users))
 	for k := range srv.users {

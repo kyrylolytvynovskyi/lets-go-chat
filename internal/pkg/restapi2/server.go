@@ -1,6 +1,7 @@
 package restapi2
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -18,6 +19,11 @@ type server struct {
 	chatService *service.Chat
 	upgrader    websocket.Upgrader
 	router      *http.ServeMux
+
+	ctx          context.Context
+	cancelFunc   context.CancelFunc
+	chanMessages chan string
+	chanWsConns  chan *websocket.Conn
 }
 
 func newServer(wsAddr string, srv service.User) *server {
@@ -30,11 +36,34 @@ func newServer(wsAddr string, srv service.User) *server {
 		CheckOrigin:     func(r *http.Request) bool { return true },
 	}
 
-	return &server{userService: userService, chatService: chatService, upgrader: upgrader, router: http.NewServeMux()}
+	ctx := context.Background()
+	ctx, cancelFunc := context.WithCancel(ctx)
+
+	chanMessages := make(chan string)
+	chanWsConns := make(chan *websocket.Conn)
+
+	return &server{
+		userService:  userService,
+		chatService:  chatService,
+		upgrader:     upgrader,
+		router:       http.NewServeMux(),
+		ctx:          ctx,
+		cancelFunc:   cancelFunc,
+		chanMessages: chanMessages,
+		chanWsConns:  chanWsConns,
+	}
 }
 
 func newInMemoryServer(wsAddr string) *server {
 	return newServer(wsAddr, service.NewUserInMemory())
+}
+
+func (srv *server) Run() {
+	srv.chatService.Run(srv.ctx, srv.chanMessages, srv.chanWsConns)
+}
+
+func (srv *server) Stop() {
+	srv.cancelFunc()
 }
 
 func (srv *server) getIndex(w http.ResponseWriter, r *http.Request) {

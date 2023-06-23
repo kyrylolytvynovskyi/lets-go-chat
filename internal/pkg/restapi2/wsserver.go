@@ -24,11 +24,11 @@ func (srv *server) wsEndpoint(w http.ResponseWriter, r *http.Request) {
 	log.Println("Received token: " + token)
 
 	//check token here
-	if err := srv.chatService.LoginToken(token); err != nil {
+	login, err := srv.chatService.ValidateAndRemoveToken(token)
+	if err != nil {
 		log.Println("Token validation error:", err)
 		return
 	}
-	defer srv.chatService.LogoutToken(token)
 
 	wsconn, err := srv.upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -37,9 +37,14 @@ func (srv *server) wsEndpoint(w http.ResponseWriter, r *http.Request) {
 	}
 	defer wsconn.Close()
 
+	if err := srv.chatService.LoginToken(token, login, wsconn); err != nil {
+		log.Println("Login err:", err)
+		return
+	}
+	defer srv.chatService.LogoutToken(token)
+
 	log.Println("processing messages")
 	srv.processMessages(wsconn)
-
 }
 
 func (srv *server) processMessages(wsconn *websocket.Conn) {
@@ -52,10 +57,12 @@ func (srv *server) processMessages(wsconn *websocket.Conn) {
 
 		log.Println(string(buf))
 
-		if err := wsconn.WriteMessage(messageType, buf); err != nil {
+		srv.chatService.ProcessMessage(messageType, string(buf))
+		/*if err := wsconn.WriteMessage(messageType, buf); err != nil {
 			log.Println(err)
 			return
-		}
+		}*/
+
 	}
 }
 
