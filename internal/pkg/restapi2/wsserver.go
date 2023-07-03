@@ -42,12 +42,13 @@ func (srv *server) wsEndpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer srv.chatService.LogoutToken(token)
+	srv.chanWsConns <- wsconn
 
 	log.Println("processing messages")
-	srv.processMessages(wsconn)
+	srv.processMessages(login, wsconn)
 }
 
-func (srv *server) processMessages(wsconn *websocket.Conn) {
+func (srv *server) processMessages(login string, wsconn *websocket.Conn) {
 	for {
 		messageType, buf, err := wsconn.ReadMessage()
 		if err != nil {
@@ -55,13 +56,11 @@ func (srv *server) processMessages(wsconn *websocket.Conn) {
 			return
 		}
 
-		log.Println(string(buf))
+		log.Printf("processMessages(%v): %v, %v\n", login, messageType, string(buf))
 
-		srv.chatService.ProcessMessage(messageType, string(buf))
-		/*if err := wsconn.WriteMessage(messageType, buf); err != nil {
-			log.Println(err)
-			return
-		}*/
+		msg := login + ": " + string(buf)
+
+		srv.chanMessages <- msg
 
 	}
 }

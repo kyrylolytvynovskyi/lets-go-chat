@@ -59,11 +59,16 @@ func newInMemoryServer(wsAddr string) *server {
 }
 
 func (srv *server) Run() {
+
 	srv.chatService.Run(srv.ctx, srv.chanMessages, srv.chanWsConns)
 }
 
 func (srv *server) Stop() {
 	srv.cancelFunc()
+}
+
+func (srv *server) Wait() {
+	srv.chatService.Wait()
 }
 
 func (srv *server) getIndex(w http.ResponseWriter, r *http.Request) {

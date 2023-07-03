@@ -16,7 +16,12 @@ type UserInMemory struct {
 }
 
 func NewUserInMemory() User {
-	return &UserInMemory{users: map[string]model.User{}}
+	return &UserInMemory{
+		users: map[string]model.User{
+			"user1": {Id: uuid.New(), UserName: "user1", Password: "12345678"},
+			"user2": {Id: uuid.New(), UserName: "user2", Password: "12345678"},
+			"user3": {Id: uuid.New(), UserName: "user3", Password: "12345678"},
+		}}
 }
 
 func (srv *UserInMemory) CreateUser(req model.CreateUserRequest) (model.CreateUserResponse, error) {

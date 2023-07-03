@@ -17,6 +17,7 @@ type Chat struct {
 	activeUsers map[string]connectionInfo //token : login
 
 	mtx sync.Mutex
+	wg  sync.WaitGroup
 }
 
 type connectionInfo struct {
@@ -92,13 +93,19 @@ func (c *Chat) GetActiveUsers() []string {
 }
 
 func (c *Chat) ProcessMessage(messageType int, msg string) {
+	log.Printf("ProcessMessage: %s", msg)
 
 }
 
 func (c *Chat) Run(ctx context.Context, messages <-chan string, wsconns <-chan *websocket.Conn) {
 
+	log.Printf("Start working thread")
+
+	c.wg.Add(1)
 	go func() {
-		msgStore := []string{}
+		defer c.wg.Done()
+		msgStore := []string{} //msgStore is local variable and do not need any synchronization
+		//processing all messages sends in a single thread helps to guarantee proper delivery order
 
 		for {
 			select {
@@ -114,19 +121,41 @@ func (c *Chat) Run(ctx context.Context, messages <-chan string, wsconns <-chan *
 	}()
 }
 
+func (c *Chat) Wait() {
+	log.Printf("Wait working thread to gracefully stop")
+	c.wg.Wait()
+	log.Printf("Working thread gracefully stopped")
+}
+
 func (c *Chat) broadcast(msg string) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
-	for _, v := range c.activeUsers {
+	var wg sync.WaitGroup
+	defer wg.Wait() //we need to wait until broadcast is finished to maintain proper order of messages
 
-		log.Printf("broadcasting message %s to conn %s", msg, v.login)
+	for _, v := range c.activeUsers {
+		//send message to each user in separate async goroutine, then wait until all of them finishes
+		wg.Add(1)
+		go func(wsconn *websocket.Conn, login string) {
+			defer wg.Done()
+			log.Printf("broadcasting message %s to conn %s", msg, login)
+
+			if err := wsconn.WriteMessage(1, []byte(msg)); err != nil {
+				log.Println(err)
+			}
+		}(v.wsconn, v.login)
 	}
+
 }
 
 func (c *Chat) sendOldMessages(msgStore []string, wsconn *websocket.Conn) {
 
 	for _, msg := range msgStore {
-		log.Printf("sending message %s", msg)
+		log.Printf("sending old message %s", msg)
+
+		if err := wsconn.WriteMessage(1, []byte(msg)); err != nil {
+			log.Println(err)
+		}
 	}
 }
