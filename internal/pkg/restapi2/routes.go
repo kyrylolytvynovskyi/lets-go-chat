@@ -42,7 +42,7 @@ func (srv *server) routes() {
 
 }
 
-func setupRouter(wsAddr string) http.Handler {
+func setupRouter(wsAddr string) (http.Handler, *server) {
 	srv := newInMemoryServer(wsAddr)
 
 	srv.routes()
@@ -55,5 +55,5 @@ func setupRouter(wsAddr string) http.Handler {
 	router := handlers.LoggingHandler(os.Stdout,
 		mw.RecoverPanic(srv.router))
 
-	return router
+	return router, srv
 }
