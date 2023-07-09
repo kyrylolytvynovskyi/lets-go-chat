@@ -43,7 +43,7 @@ func (srv *server) routes() {
 }
 
 func setupRouter(wsAddr string) (http.Handler, *server) {
-	srv := newInMemoryServer(wsAddr)
+	srv := InitializeServer(wsAddr)
 
 	srv.routes()
 
