@@ -12,6 +12,7 @@ import (
 	mw "github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/middleware"
 	"github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/model"
 	"github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/service"
+	servicemocks "github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/service/mocks"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -24,21 +25,6 @@ func Test_newInMemoryServer(t *testing.T) {
 	assert.NotNil(t, server.upgrader)
 }
 
-type mockUserServer struct {
-	service.User
-
-	createUserFunc func(req model.CreateUserRequest) (model.CreateUserResponse, error)
-	loginUserFunc  func(req model.LoginUserRequest) (model.LoginUserResponse, error)
-}
-
-func (s *mockUserServer) CreateUser(req model.CreateUserRequest) (model.CreateUserResponse, error) {
-	return s.createUserFunc(req)
-}
-
-func (s *mockUserServer) LoginUser(req model.LoginUserRequest) (model.LoginUserResponse, error) {
-	return s.loginUserFunc(req)
-}
-
 func newMockServer(srv service.User) *server {
 	wsAddr := "localhost:8080"
 
@@ -47,7 +33,7 @@ func newMockServer(srv service.User) *server {
 
 func Test_server_getIndex(t *testing.T) {
 
-	srv := newMockServer(&mockUserServer{})
+	srv := newMockServer(&servicemocks.User{})
 	srv.routes()
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -71,13 +57,10 @@ func Test_server_getIndex(t *testing.T) {
 	}
 }
 
-func testPostUserSuccess(t *testing.T, userServer *mockUserServer, mux *http.ServeMux) {
-
-	userServer.createUserFunc = func(req model.CreateUserRequest) (model.CreateUserResponse, error) {
-		return model.CreateUserResponse{Id: "new_id", UserName: "new_username"}, nil
-	}
-
+func testPostUserSuccess(t *testing.T, userServer *servicemocks.User, mux *http.ServeMux) {
 	createUserRequest := model.CreateUserRequest{UserName: "new_username", Password: "new_password"}
+	userServer.On("CreateUser", createUserRequest).Return(model.CreateUserResponse{Id: "new_id", UserName: "new_username"}, nil)
+
 	jsonReq, _ := json.Marshal(createUserRequest)
 
 	req := httptest.NewRequest(http.MethodPost, "/v1/user", bytes.NewBuffer(jsonReq))
@@ -98,14 +81,11 @@ func testPostUserSuccess(t *testing.T, userServer *mockUserServer, mux *http.Ser
 	assert.Equal(t, "new_username", createUserResponse.UserName, "Wrong user name")
 }
 
-func testPostUserServiceError(t *testing.T, userServer *mockUserServer, mux *http.ServeMux) {
-
+func testPostUserServiceError(t *testing.T, userServer *servicemocks.User, mux *http.ServeMux) {
 	//test service error
-	userServer.createUserFunc = func(req model.CreateUserRequest) (model.CreateUserResponse, error) {
-		return model.CreateUserResponse{}, fmt.Errorf("service error")
-	}
+	createUserRequest := model.CreateUserRequest{UserName: "new_username_service_error", Password: "new_password"}
+	userServer.On("CreateUser", createUserRequest).Return(model.CreateUserResponse{}, fmt.Errorf("service error"))
 
-	createUserRequest := model.CreateUserRequest{UserName: "new_username", Password: "new_password"}
 	jsonReq, _ := json.Marshal(createUserRequest)
 
 	req := httptest.NewRequest(http.MethodPost, "/v1/user", bytes.NewBuffer(jsonReq))
@@ -120,7 +100,7 @@ func testPostUserServiceError(t *testing.T, userServer *mockUserServer, mux *htt
 	assert.Equal(t, "service error\n", string(data), "Wrong response text")
 }
 
-func testPostUserValidationError(t *testing.T, userServer *mockUserServer, mux *http.ServeMux) {
+func testPostUserValidationError(t *testing.T, mux *http.ServeMux) {
 	createUserRequest := model.CreateUserRequest{UserName: "usr", Password: "new_password"}
 	jsonReq, _ := json.Marshal(createUserRequest)
 
@@ -136,7 +116,7 @@ func testPostUserValidationError(t *testing.T, userServer *mockUserServer, mux *
 	assert.Equal(t, "userName minLength is 4, actual length is 3\n", string(data), "Wrong response text")
 }
 
-func testPostUserParsingError(t *testing.T, userServer *mockUserServer, mux *http.ServeMux) {
+func testPostUserParsingError(t *testing.T, mux *http.ServeMux) {
 
 	req := httptest.NewRequest(http.MethodPost, "/v1/user", bytes.NewBuffer([]byte("invalid json")))
 
@@ -151,23 +131,19 @@ func testPostUserParsingError(t *testing.T, userServer *mockUserServer, mux *htt
 }
 
 func Test_server_postUser(t *testing.T) {
-	userServer := &mockUserServer{}
+	userServer := &servicemocks.User{}
 	srv := newMockServer(userServer)
 	srv.routes()
 
 	testPostUserSuccess(t, userServer, srv.router)
 	testPostUserServiceError(t, userServer, srv.router)
-	testPostUserValidationError(t, userServer, srv.router)
-	testPostUserParsingError(t, userServer, srv.router)
+	testPostUserValidationError(t, srv.router)
+	testPostUserParsingError(t, srv.router)
 }
 
-func testPostUserLoginSuccess(t *testing.T, userServer *mockUserServer, mux *http.ServeMux) {
-
-	userServer.loginUserFunc = func(req model.LoginUserRequest) (model.LoginUserResponse, error) {
-		return model.LoginUserResponse{"ws://localhost:8080"}, nil
-	}
-
+func testPostUserLoginSuccess(t *testing.T, userServer *servicemocks.User, mux *http.ServeMux) {
 	reqModel := model.LoginUserRequest{UserName: "user", Password: "password"}
+	userServer.On("LoginUser", reqModel).Return(model.LoginUserResponse{"ws://localhost:8080"}, nil)
 	jsonReq, _ := json.Marshal(reqModel)
 
 	req := httptest.NewRequest(http.MethodPost, "/v1/user/login", bytes.NewBuffer(jsonReq))
@@ -186,13 +162,9 @@ func testPostUserLoginSuccess(t *testing.T, userServer *mockUserServer, mux *htt
 	assert.Contains(t, respModel.Url, "ws://localhost:8080", "Wrong websocket url")
 }
 
-func testPostUserLoginServiceError(t *testing.T, userServer *mockUserServer, mux *http.ServeMux) {
-
-	userServer.loginUserFunc = func(req model.LoginUserRequest) (model.LoginUserResponse, error) {
-		return model.LoginUserResponse{}, fmt.Errorf("service error")
-	}
-
-	reqModel := model.LoginUserRequest{UserName: "user", Password: "password"}
+func testPostUserLoginServiceError(t *testing.T, userServer *servicemocks.User, mux *http.ServeMux) {
+	reqModel := model.LoginUserRequest{UserName: "user_error", Password: "password"}
+	userServer.On("LoginUser", reqModel).Return(model.LoginUserResponse{}, fmt.Errorf("service error"))
 	jsonReq, _ := json.Marshal(reqModel)
 
 	req := httptest.NewRequest(http.MethodPost, "/v1/user/login", bytes.NewBuffer(jsonReq))
@@ -209,7 +181,7 @@ func testPostUserLoginServiceError(t *testing.T, userServer *mockUserServer, mux
 
 }
 
-func testPostUserLoginParsingError(t *testing.T, userServer *mockUserServer, mux *http.ServeMux) {
+func testPostUserLoginParsingError(t *testing.T, mux *http.ServeMux) {
 
 	req := httptest.NewRequest(http.MethodPost, "/v1/user/login", bytes.NewBuffer([]byte("invalid json")))
 
@@ -224,18 +196,18 @@ func testPostUserLoginParsingError(t *testing.T, userServer *mockUserServer, mux
 }
 
 func Test_server_postUserLogin(t *testing.T) {
-	userServer := &mockUserServer{}
+	userServer := &servicemocks.User{}
 	srv := newMockServer(userServer)
 	srv.routes()
 
 	testPostUserLoginSuccess(t, userServer, srv.router)
 	testPostUserLoginServiceError(t, userServer, srv.router)
-	testPostUserLoginParsingError(t, userServer, srv.router)
+	testPostUserLoginParsingError(t, srv.router)
 
 }
 
 func Test_server_getError(t *testing.T) {
-	srv := newMockServer(&mockUserServer{})
+	srv := newMockServer(&servicemocks.User{})
 	srv.routes()
 
 	req := httptest.NewRequest(http.MethodGet, "/error", nil)
@@ -253,7 +225,7 @@ func Test_server_getError(t *testing.T) {
 }
 
 func Test_server_getStringPanic(t *testing.T) {
-	srv := newMockServer(&mockUserServer{})
+	srv := newMockServer(&servicemocks.User{})
 	srv.routes()
 
 	req := httptest.NewRequest(http.MethodGet, "/panic/string", nil)
@@ -266,7 +238,7 @@ func Test_server_getStringPanic(t *testing.T) {
 }
 
 func Test_server_getStructPanic(t *testing.T) {
-	srv := newMockServer(&mockUserServer{})
+	srv := newMockServer(&servicemocks.User{})
 	srv.routes()
 
 	req := httptest.NewRequest(http.MethodGet, "/panic/struct", nil)
