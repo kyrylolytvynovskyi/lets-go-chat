@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"runtime/trace"
 	"sync"
 
 	"github.com/google/uuid"
@@ -113,9 +114,9 @@ func (c *Chat) Run(ctx context.Context, messages <-chan string, wsconns <-chan *
 				return
 			case msg := <-messages:
 				msgStore = append(msgStore, msg)
-				c.broadcast(msg)
+				c.broadcast(ctx, msg)
 			case wsconn := <-wsconns:
-				c.sendOldMessages(msgStore, wsconn)
+				c.sendOldMessages(ctx, msgStore, wsconn)
 			}
 		}
 	}()
@@ -127,7 +128,9 @@ func (c *Chat) Wait() {
 	log.Printf("Working thread gracefully stopped")
 }
 
-func (c *Chat) broadcast(msg string) {
+func (c *Chat) broadcast(ctx context.Context, msg string) {
+	defer trace.StartRegion(ctx, "broadcast").End()
+
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
@@ -149,7 +152,8 @@ func (c *Chat) broadcast(msg string) {
 
 }
 
-func (c *Chat) sendOldMessages(msgStore []string, wsconn *websocket.Conn) {
+func (c *Chat) sendOldMessages(ctx context.Context, msgStore []string, wsconn *websocket.Conn) {
+	defer trace.StartRegion(ctx, "sendOldMessages").End()
 
 	for _, msg := range msgStore {
 		log.Printf("sending old message %s", msg)

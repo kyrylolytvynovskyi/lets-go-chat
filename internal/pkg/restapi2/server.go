@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"runtime/trace"
 
 	"github.com/gorilla/websocket"
 	"github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/model"
@@ -92,6 +93,7 @@ func (srv *server) getStructPanic(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *server) postUser(w http.ResponseWriter, r *http.Request) {
+	defer trace.StartRegion(srv.ctx, "postUser").End()
 
 	var createUserRequest model.CreateUserRequest
 	err := json.NewDecoder(r.Body).Decode(&createUserRequest)
@@ -119,7 +121,7 @@ func (srv *server) postUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (srv *server) postUserLogin(w http.ResponseWriter, r *http.Request) {
-
+	defer trace.StartRegion(srv.ctx, "postUserLogin").End()
 	var loginUserRequest model.LoginUserRequest
 	err := json.NewDecoder(r.Body).Decode(&loginUserRequest)
 	if err != nil {
