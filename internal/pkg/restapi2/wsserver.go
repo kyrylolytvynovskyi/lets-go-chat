@@ -1,10 +1,12 @@
 package restapi2
 
 import (
-	"encoding/json"
+	//"encoding/json"
 	"log"
 	"net/http"
+	"runtime/trace"
 
+	"github.com/goccy/go-json"
 	"github.com/gorilla/websocket"
 )
 
@@ -66,8 +68,8 @@ func (srv *server) processMessages(login string, wsconn *websocket.Conn) {
 }
 
 func (srv *server) getActiveUsers(w http.ResponseWriter, r *http.Request) {
-
-	activeUsers := srv.chatService.GetActiveUsers()
+	defer trace.StartRegion(srv.ctx, "getActiveUsers").End()
+	activeUsers := srv.chatService.GetActiveUsers(srv.ctx)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

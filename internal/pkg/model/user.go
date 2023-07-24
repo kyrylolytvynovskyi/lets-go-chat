@@ -48,3 +48,12 @@ func (r *LoginUserRequest) Validate() error {
 type LoginUserResponse struct {
 	Url string `json:"url"`
 }
+
+func (r LoginUserResponse) MarshalJSON() ([]byte, error) {
+	b := make([]byte, 0, len(r.Url)+16)
+	b = append(b, `{"url":"`...)
+	b = append(b, r.Url...)
+	b = append(b, `"}`...)
+
+	return b, nil
+}
