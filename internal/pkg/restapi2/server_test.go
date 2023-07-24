@@ -2,13 +2,14 @@ package restapi2
 
 import (
 	"bytes"
-	"encoding/json"
+	//"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/goccy/go-json"
 	mw "github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/middleware"
 	"github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/model"
 	"github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/service"
@@ -248,4 +249,28 @@ func Test_server_getStructPanic(t *testing.T) {
 	panicFunc := func() { srv.router.ServeHTTP(resp, req) }
 
 	assert.PanicsWithValue(t, mw.PanicStruct{Code: 404, Msg: "panic message"}, panicFunc)
+}
+
+func benchPostUserLogin(mux *http.ServeMux, jsonReq []byte) {
+
+	req := httptest.NewRequest(http.MethodPost, "/v1/user/login", bytes.NewBuffer(jsonReq))
+
+	resp := httptest.NewRecorder()
+	mux.ServeHTTP(resp, req)
+	result := resp.Result()
+	defer result.Body.Close()
+}
+
+func BenchmarkPostUserLogin(b *testing.B) {
+	userServer := &servicemocks.User{}
+	srv := newMockServer(userServer)
+	srv.routes()
+
+	reqModel := model.LoginUserRequest{UserName: "user", Password: "password"}
+	userServer.On("LoginUser", reqModel).Return(model.LoginUserResponse{"ws://localhost:8080"}, nil)
+	jsonReq, _ := json.Marshal(reqModel)
+
+	for n := 0; n < b.N; n++ {
+		benchPostUserLogin(srv.router, jsonReq)
+	}
 }

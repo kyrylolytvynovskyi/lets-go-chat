@@ -2,7 +2,7 @@ package restapi2
 
 import (
 	"context"
-	"encoding/json"
+	//"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,6 +12,7 @@ import (
 	"github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/model"
 	"github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/service"
 
+	"github.com/goccy/go-json"
 	mw "github.com/kyrylolytvynovskyi/lets-go-chat/internal/pkg/middleware"
 )
 

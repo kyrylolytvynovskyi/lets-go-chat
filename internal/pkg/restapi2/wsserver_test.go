@@ -1,13 +1,14 @@
 package restapi2
 
 import (
-	"encoding/json"
+	//"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/goccy/go-json"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 )

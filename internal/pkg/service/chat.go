@@ -79,8 +79,8 @@ func (c *Chat) LogoutToken(token string) error {
 	return nil
 }
 
-func (c *Chat) GetActiveUsers() []string {
-
+func (c *Chat) GetActiveUsers(ctx context.Context) []string {
+	defer trace.StartRegion(ctx, "GetActiveUsers").End()
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
@@ -91,11 +91,6 @@ func (c *Chat) GetActiveUsers() []string {
 	}
 
 	return ret
-}
-
-func (c *Chat) ProcessMessage(messageType int, msg string) {
-	log.Printf("ProcessMessage: %s", msg)
-
 }
 
 func (c *Chat) Run(ctx context.Context, messages <-chan string, wsconns <-chan *websocket.Conn) {
@@ -144,6 +139,7 @@ func (c *Chat) broadcast(ctx context.Context, msg string) {
 			defer wg.Done()
 			log.Printf("broadcasting message %s to conn %s", msg, login)
 
+			defer trace.StartRegion(ctx, "WriteMessage").End()
 			if err := wsconn.WriteMessage(1, []byte(msg)); err != nil {
 				log.Println(err)
 			}
@@ -158,6 +154,7 @@ func (c *Chat) sendOldMessages(ctx context.Context, msgStore []string, wsconn *w
 	for _, msg := range msgStore {
 		log.Printf("sending old message %s", msg)
 
+		defer trace.StartRegion(ctx, "WriteMessage").End()
 		if err := wsconn.WriteMessage(1, []byte(msg)); err != nil {
 			log.Println(err)
 		}
